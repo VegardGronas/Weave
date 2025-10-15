@@ -22,6 +22,7 @@ namespace Weave
         public PortType PortType; // Input, Output
         public Type DataType; // typeof(float), typeof(string), etc.
         public List<Connection> Connections = new();
+        public NodeTransform NTransform { get; private set; } = new(Vector2.zero, new(8, 8));
 
         public NodePort(Node owner, string name, PortType portType, Type dataType)
         {

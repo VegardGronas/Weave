@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,9 +8,9 @@ namespace Weave
     {
         private void DrawNodes()
         {
-            if (graph?.Nodes == null) return;
+            if (graph?.GetNodes() == null) return;
 
-            foreach (var node in graph.Nodes)
+            foreach (var node in graph.GetNodes())
             {
                 Rect rect = new Rect(node.NTransform.Position, node.NTransform.Size);
 
@@ -27,6 +28,7 @@ namespace Weave
                 foreach (var port in node.Ports.Values)
                 {
                     DrawPort(node, port, rect);
+                    DrawPortConnections(port);
                 }
             }
         }
@@ -40,7 +42,9 @@ namespace Weave
             else
                 portPos = new Vector2(nodeRect.xMax - 4, nodeRect.y + nodeRect.height / 2);
 
-            Rect portRect = new Rect(portPos.x, portPos.y, 8, 8);
+            port.NTransform.Position = portPos;
+
+            Rect portRect = new Rect(portPos.x, portPos.y, port.NTransform.Size.x, port.NTransform.Size.y);
             EditorGUI.DrawRect(portRect, Color.yellow);
 
             // Handle clicks on port
@@ -51,9 +55,24 @@ namespace Weave
             }
         }
 
-        private void DrawPortConnections()
+        private void DrawPortConnections(NodePort port)
         {
-
+            if (port.PortType == PortType.Input) return;
+            foreach (Connection connection in port.Connections)
+            {
+                NodePort nextPort = graph.GetPort(connection.ToPortID);
+                if (nextPort != null)
+                {
+                    Handles.DrawBezier(
+                        port.NTransform.Position, nextPort.NTransform.Position,
+                        port.NTransform.Position + Vector2.right * 50f,
+                        nextPort.NTransform.Position + Vector2.left * 50f,
+                        Color.white,
+                        null,
+                        2f
+                    );
+                }
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Weave
 {
+    [NodeMenu("Core/Start")]
     public class StartNode : Node
     {
         public override void OnCreation()

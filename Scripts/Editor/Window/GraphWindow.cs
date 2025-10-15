@@ -10,6 +10,7 @@ namespace Weave
     {
         private Graph graph;
         private Node selectedNode;
+        private NodePort selectedPort;
         private bool isDraggingNode;
         private Vector2 dragOffset;
 
@@ -41,8 +42,6 @@ namespace Weave
             HandleInput(Event.current);
 
             DrawNodes();
-
-            DrawPortConnections();
         }
 
         private void AddNodeOfType(Type type, Vector2 position)
@@ -51,16 +50,30 @@ namespace Weave
             Node node = (Node)Activator.CreateInstance(type);
             node.NTransform.Position = position;
             node.OnCreation();
-            graph.Nodes.Add(node);
+            graph.AddNode(node);
         }
 
         private Node GetNodeAtPosition(Vector2 pos)
         {
-            foreach (var node in graph.Nodes)
+            foreach (var node in graph.GetNodes())
             {
                 Rect rect = new(node.NTransform.Position, node.NTransform.Size);
                 if (rect.Contains(pos))
                     return node;
+            }
+            return null;
+        }
+
+        public NodePort GetPortAtPosition(Vector2 pos)
+        {
+            foreach(Node node in graph.GetNodes())
+            {
+                foreach(NodePort port in node.Ports.Values)
+                {
+                    Rect rect = new(port.NTransform.Position, port.NTransform.Size);
+                    if(rect.Contains(pos)) 
+                        return port;
+                }
             }
             return null;
         }
@@ -72,9 +85,8 @@ namespace Weave
         {
             if(selectedNode != null)
             {
-                if(graph.Nodes.Contains(selectedNode))
+                if(graph.RemoveNode(selectedNode))
                 {
-                    graph.Nodes.Remove(selectedNode);
                     selectedNode = null;
                 }
             }

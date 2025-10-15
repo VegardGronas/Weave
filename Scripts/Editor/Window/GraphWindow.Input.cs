@@ -31,8 +31,20 @@ namespace Weave
 
         private void OnLeftMouseDown(Event e)
         {
-            // Check if clicked on a node
-            selectedNode = GetNodeAtPosition(e.mousePosition);
+            selectedPort = GetPortAtPosition(e.mousePosition);
+            if (selectedPort != null)
+            {
+                Debug.Log("Clicked port: " + selectedPort.Name);
+                e.Use();
+                return;
+            }
+            else
+            {
+                selectedPort = null;
+            }
+
+                // Check if clicked on a node
+                selectedNode = GetNodeAtPosition(e.mousePosition);
             if (selectedNode != null)
             {
                 dragOffset = selectedNode.NTransform.Position - e.mousePosition;
@@ -49,19 +61,20 @@ namespace Weave
 
         private void OnRightMouseDown(Event e)
         {
-            GenericMenu menu = new();
+            GenericMenu menu = new GenericMenu();
 
-            // Find all types that inherit from Node
-            var nodeTypes = Assembly.GetAssembly(typeof(Node))
-                                    .GetTypes()
-                                    .Where(t => t.IsSubclassOf(typeof(Node)) && !t.IsAbstract);
+            // Find all node types
+            var nodeTypes = System.Reflection.Assembly.GetAssembly(typeof(Node))
+                .GetTypes()
+                .Where(t => t.IsSubclassOf(typeof(Node)) && !t.IsAbstract);
 
             foreach (var type in nodeTypes)
             {
-                string typeName = type.Name;
+                // Get the NodeMenuAttribute, if any
+                var attr = type.GetCustomAttribute<NodeMenuAttribute>();
+                string menuPath = attr != null ? attr.Category : type.Name;
 
-                // Add menu item for each node type
-                menu.AddItem(new GUIContent(typeName), false, () => AddNodeOfType(type, e.mousePosition));
+                menu.AddItem(new GUIContent(menuPath), false, () => AddNodeOfType(type, e.mousePosition));
             }
 
             menu.ShowAsContext();
@@ -70,6 +83,21 @@ namespace Weave
 
         private void OnMouseUp(Event e)
         {
+            if (selectedPort != null)
+            {
+                NodePort currentPort = GetPortAtPosition(e.mousePosition);
+                if (currentPort != null)
+                {
+                    graph.ConnectPort(selectedPort, currentPort);
+                }
+                e.Use();
+                return;
+            }
+            else
+            {
+                selectedPort = null;
+            }
+
             if (isDraggingNode)
             {
                 isDraggingNode = false;
